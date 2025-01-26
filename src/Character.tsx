@@ -1,6 +1,5 @@
 import { useState } from "react";
-
-// Define constants for attributes and skills
+import SkillCheck from "./SkillCheck";
 import { ATTRIBUTE_LIST, CLASS_LIST, SKILL_LIST } from "./consts";
 
 interface CharacterProps {
@@ -24,6 +23,23 @@ const Character: React.FC<CharacterProps> = ({
   handleSkillChange,
 }) => {
   const [num, setNum] = useState<number>(3);
+  const [selectedSkill, setSelectedSkill] = useState<string>(
+    SKILL_LIST[0].name
+  );
+  const [dc, setDc] = useState<number>(10);
+  const [skill, setSkill] = useState<string>(SKILL_LIST[0].name);
+  const [rollResult, setRollResult] = useState<string | null>(null);
+
+  const totalSkill = () => {
+    const skillModifier = getModifier(
+      characterAttributes[
+        SKILL_LIST.find((skill) => skill.name === selectedSkill)
+          ?.attributeModifier || ""
+      ]
+    );
+    return characterSkillPoints[selectedSkill] + skillModifier;
+  };
+
   const getModifier = (attributeValue: number) =>
     Math.floor((attributeValue - 10) / 2);
 
@@ -46,84 +62,111 @@ const Character: React.FC<CharacterProps> = ({
   };
 
   return (
-    <div style={{ display: "flex", justifyContent: "space-between" }}>
+    <div>
       <div>
-        <h4>Attributes</h4>
-        {ATTRIBUTE_LIST.map((attribute, index) => (
-          <div key={index}>
-            <span>{attribute}: </span>
-            <button onClick={() => handleAttributeChange(id, attribute, true)}>
-              +
-            </button>
-            <button onClick={() => handleAttributeChange(id, attribute, false)}>
-              -
-            </button>
-            <span>{characterAttributes[attribute]}</span>
-            <span>
-              Modifier: {Math.floor((characterAttributes[attribute] - 10) / 2)}
-            </span>
-          </div>
-        ))}
-      </div>
-      <div>
-        <h4>Classes</h4>
-        {Object.keys(CLASS_LIST).map((classItem, index) => (
-          <div
-            key={index}
-            style={{
-              color: meetsRequirements(CLASS_LIST[classItem]) ? "green" : "red",
-            }}
-          >
-            {classItem}
-            <button onClick={() => setNum(num === index ? -1 : index)}>
-              {num === index ? "Hide Requirements" : "Show Requirements"}
-            </button>
-            {num === index && (
-              <div>
-                {Object.entries(CLASS_LIST[classItem]).map(
-                  ([attribute, requirement], idx) => (
-                    <div key={idx}>
-                      <span>{attribute}: </span>
-                      <span>{requirement as number}</span>
-                    </div>
-                  )
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      <div>
-        <h4>Skills</h4>
+        <h3>Character {id}</h3>
         <div>
-          <span>Total Points: {totalPoints()}</span>
+          <h2>Party Skill Check</h2>
+          <SkillCheck
+            dc={dc}
+            party={false}
+            characterAttributes={characterAttributes}
+            characterSkills={characterSkillPoints}
+            onSkillChange={(selectedSkill) => setSkill(selectedSkill)}
+            onRollResult={(result) => setRollResult(result)}
+          />
+          {rollResult && <p>{rollResult}</p>}
         </div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
         <div>
-          <span>Points Remaining: {pointsRemaining()}</span>
-        </div>
-        {SKILL_LIST.map((skill, index) => {
-          const attribute = SKILL_LIST[index].attributeModifier;
-          const modifier = getModifier(characterAttributes[attribute]);
-          const total = characterSkillPoints[skill.name] + modifier;
-          return (
+          <h4>Attributes</h4>
+          {ATTRIBUTE_LIST.map((attribute, index) => (
             <div key={index}>
-              <span>
-                {skill.name} - points: {characterSkillPoints[skill.name]}{" "}
-              </span>
-              <button onClick={() => handleSkillChange(id, skill.name, true)}>
-                +
-              </button>
-              <button onClick={() => handleSkillChange(id, skill.name, false)}>
-                -
-              </button>
+              <span>{attribute}: </span>
+              <span>{characterAttributes[attribute]}</span>
               <span>
                 {" "}
-                modifier ({attribute}): {modifier}{" "}
+                (Modifier:{" "}
+                {Math.floor((characterAttributes[attribute] - 10) / 2)})
               </span>
-              <span> total: {total} </span>
+              <button
+                onClick={() => handleAttributeChange(id, attribute, true)}
+              >
+                +
+              </button>
+              <button
+                onClick={() => handleAttributeChange(id, attribute, false)}
+              >
+                -
+              </button>
             </div>
-          );
-        })}
+          ))}
+        </div>
+        <div>
+          <h4>Classes</h4>
+          {Object.keys(CLASS_LIST).map((classItem, index) => (
+            <div
+              key={index}
+              style={{
+                color: meetsRequirements(CLASS_LIST[classItem])
+                  ? "green"
+                  : "red",
+              }}
+            >
+              {classItem}
+              <button onClick={() => setNum(num === index ? -1 : index)}>
+                {num === index ? "Hide Requirements" : "Show Requirements"}
+              </button>
+              {num === index && (
+                <div>
+                  {Object.entries(CLASS_LIST[classItem]).map(
+                    ([attribute, requirement], idx) => (
+                      <div key={idx}>
+                        <span>{attribute}: </span>
+                        <span>{requirement as number}</span>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div>
+          <h4>Skills</h4>
+          <div>
+            <span>Total Points: {totalPoints()}</span>
+          </div>
+          <div>
+            <span>Points Remaining: {pointsRemaining()}</span>
+          </div>
+          {SKILL_LIST.map((skill, index) => {
+            const attribute = SKILL_LIST[index].attributeModifier;
+            const modifier = getModifier(characterAttributes[attribute]);
+            const total = characterSkillPoints[skill.name] + modifier;
+            return (
+              <div key={index}>
+                <span>
+                  {skill.name} - points: {characterSkillPoints[skill.name]}{" "}
+                </span>
+                <button onClick={() => handleSkillChange(id, skill.name, true)}>
+                  +
+                </button>
+                <button
+                  onClick={() => handleSkillChange(id, skill.name, false)}
+                >
+                  -
+                </button>
+                <span>
+                  {" "}
+                  modifier ({attribute}): {modifier}{" "}
+                </span>
+                <span> total: {total} </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

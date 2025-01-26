@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import Character from "./Character";
+import SkillCheck from "./SkillCheck";
 import { ATTRIBUTE_LIST, SKILL_LIST } from "./consts";
 
 interface CharacterData {
@@ -14,6 +15,9 @@ function App() {
   const apiUrl = `https://recruiting.verylongdomaintotestwith.ca/api/${githubUsername}/character`;
 
   const [characters, setCharacters] = useState<CharacterData[]>([]);
+  const [partySkill, setPartySkill] = useState<string>(SKILL_LIST[0].name);
+  const [partyDC, setPartyDC] = useState<number>(10);
+  const [partyRollResult, setPartyRollResult] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCharacters = async () => {
@@ -71,9 +75,7 @@ function App() {
           );
 
           if (increment && totalAttributes >= 70) {
-            alert(
-              "Total attributes cannot exceed 70. Decrease another attribute first."
-            );
+            alert("A Character can have up to 70 Delegated Attribute Points.");
             return character;
           }
 
@@ -136,8 +138,19 @@ function App() {
       </header>
       <section className="App-section">
         <div>
-          <h2>Characters</h2>
           <button onClick={addCharacter}>Add Character</button>
+          <button onClick={saveCharacters}>Save Characters</button>
+          <div>
+            <h2>Party Skill Check</h2>
+            <SkillCheck
+              dc={partyDC}
+              party={true}
+              onSkillChange={(selectedSkill) => setPartySkill(selectedSkill)}
+              onRollResult={(result) => setPartyRollResult(result)}
+              characters={characters}
+            />
+            {partyRollResult && <p>{partyRollResult}</p>}
+          </div>
           {characters.map((character, index) => (
             <Character
               key={character.id}
@@ -149,7 +162,6 @@ function App() {
             />
           ))}
         </div>
-        <button onClick={saveCharacters}>Save Characters</button>
       </section>
     </div>
   );
